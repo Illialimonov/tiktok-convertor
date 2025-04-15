@@ -14,20 +14,32 @@ public class CreateVideoDTO {
     @NotNull
     private String fillerVideo;
 
+    @NotNull
+    private String role;
+
     // ✅ Default constructor (required for Spring & Jackson)
     public CreateVideoDTO() {
     }
 
     // ✅ Constructor with parameters
-    public CreateVideoDTO(String youtubeUrl, List<Integer> timingsList, String fillerVideo) {
+    public CreateVideoDTO(String youtubeUrl, List<Integer> timingsList, String fillerVideo, String role) {
         this.youtubeUrl = youtubeUrl;
         this.timingsList = timingsList;
         this.fillerVideo = fillerVideo;
+        this.role = role;
     }
 
     // ✅ Getters
     public String getYoutubeUrl() {
         return youtubeUrl;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public List<Integer> getTimingsList() {
