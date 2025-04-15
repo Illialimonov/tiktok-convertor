@@ -39,6 +39,8 @@ public class MainController {
         adjustForFiller(fillerTimingsList, fillerVideo);
         String hash = generateUniqueHash();
         int quality = getQualityBasedOnRole(role);
+        int rate = getRateBasedOnRole(role);
+        int crf = getCrfBaseOnRole(role);
 
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
@@ -46,14 +48,14 @@ public class MainController {
                         "-4 --proxy \"https://customer-lymonov_RgfaH-sessid-0050345537-sesstime-10:Ilialimonov05+@pr.oxylabs.io:7777\" " +
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
-                        "-f \"bestvideo[height<=%s]+bestaudio\" -o - \"%s\" | " +
+                        "-f \"bestvideo[height<=%d]+bestaudio\" -o - \"%s\" | " +
                         "ffmpeg " + // <-- add space here!
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
                         "-filter_complex \"[0:v]trim=start=%s:end=%s,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
                         "[1:v]trim=start=%s:end=%s,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[v]; " +
                         "[0:a]atrim=start=%s:end=%s,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[v]\" -map \"[audio]\" -r 60 -t %s -c:v libx264 -profile:v baseline -crf 23 -preset ultrafast " +
+                        "-map \"[v]\" -map \"[audio]\" -r %d -t %s -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 quality,
@@ -63,6 +65,8 @@ public class MainController {
                 fillerTimingsList.get(0), fillerTimingsList.get(1),
                 timingsList.get(0), timingsList.get(1),
                 (timingsList.get(1) - timingsList.get(0)),
+                rate,
+                crf,
                 hash
         );
 
@@ -86,7 +90,18 @@ public class MainController {
 
         process.waitFor();
         System.out.println(Thread.currentThread().getName() + " finished execution.");
-        return "https://storage.googleapis.com/tiktok1234/"+ hash + "_"+ 1 +".mp4";
+        return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
+    }
+
+    private static int getCrfBaseOnRole(String role) {
+        if (role.equals("PREMIUM")) return 23;
+        if (role.equals("PRO")) return 21;
+        return 28;
+    }
+
+    private static int getRateBasedOnRole(String role) {
+        if (role.equals("PREMIUM") || role.equals("PRO")) return 60;
+        return 30;
     }
 
     private static int getQualityBasedOnRole(String role) {
