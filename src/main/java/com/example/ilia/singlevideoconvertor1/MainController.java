@@ -32,6 +32,36 @@ public class MainController {
         return runCommand(video.getYoutubeUrl(), video.getTimingsList(), video.getFillerVideo(), video.getRole());
     }
 
+    @PostMapping("/picture")
+    public String pic(@RequestBody PictureDTO pic) throws IOException, InterruptedException {
+        System.out.println(pic.getVideoURL());
+        return getPic(pic.getVideoURL());
+    }
+
+    private String getPic(String videoURL) throws IOException {
+        String hash = generateUniqueHash();
+        String command = String.format("ffmpeg -i \"%s\"" +
+                " -frames:v 1 -q:v 2 -f image2pipe -vcodec png - | gsutil cp - gs://tiktok1234/%s.png"
+                ,videoURL,
+                hash
+                );
+        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(Thread.currentThread().getName() + ": " + line);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        return "https://storage.googleapis.com/tiktok1234/"+ hash +".png";
+
+    }
+
 
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role) throws InterruptedException, IOException {
         fillerVideo = checkIfRandom(fillerVideo);
@@ -64,11 +94,13 @@ public class MainController {
                 timingsList.get(0), timingsList.get(1),
                 fillerTimingsList.get(0), fillerTimingsList.get(1),
                 timingsList.get(0), timingsList.get(1),
-                (timingsList.get(1) - timingsList.get(0)),
                 rate,
+                (timingsList.get(1) - timingsList.get(0)),
                 crf,
                 hash
         );
+
+        System.out.println(command);
 
 
 
