@@ -41,10 +41,10 @@ public class MainController {
     private String getPic(String videoURL) throws IOException {
         String hash = generateUniqueHash();
         String command = String.format("ffmpeg -i \"%s\"" +
-                " -frames:v 1 -q:v 2 -f image2pipe -vcodec png - | gsutil cp - gs://tiktok1234/%s.png"
+                        " -frames:v 1 -q:v 2 -f image2pipe -vcodec png - | gsutil cp - gs://tiktok1234/%s.png"
                 ,videoURL,
                 hash
-                );
+        );
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
         Process process = builder.start();
@@ -63,6 +63,8 @@ public class MainController {
     }
 
 
+
+
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role) throws InterruptedException, IOException {
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
@@ -71,41 +73,47 @@ public class MainController {
         int quality = getQualityBasedOnRole(role);
         int rate = getRateBasedOnRole(role);
         int crf = getCrfBaseOnRole(role);
+        int dlStart = Math.max(0, timingsList.get(0) - 10);
+        int dlEnd = timingsList.get(1) + 10;
+
+        int ffmpegStart = timingsList.get(0) - dlStart; // should be ~10
+        int ffmpegEnd = timingsList.get(1) - dlStart;   // should be (end - start) + 10
+        int duration = ffmpegEnd - ffmpegStart;         // safe fallback for `-t` in ffmpeg
+
+        System.out.println("MY QUALITY IS " + quality);
+        System.out.println("MY RATE  IS " + rate);
+        System.out.println("MY RATE  IS " + crf);
 
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
+                        "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"https://customer-lymonov_RgfaH-sessid-0050345537-sesstime-10:Ilialimonov05+@pr.oxylabs.io:7777\" " +
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"bestvideo[height<=%d]+bestaudio\" -o - \"%s\" | " +
-                        "ffmpeg " + // <-- add space here!
+                        "ffmpeg " +
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%s:end=%s,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
-                        "[1:v]trim=start=%s:end=%s,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
+                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
+                        "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[v]; " +
-                        "[0:a]atrim=start=%s:end=%s,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[v]\" -map \"[audio]\" -r %d -t %s -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
+                        "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
+                        "-map \"[v]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
+                dlStart,
+                dlEnd,
                 quality,
                 youtubeUrl,
                 fillerVideo,
-                timingsList.get(0), timingsList.get(1),
-                fillerTimingsList.get(0), fillerTimingsList.get(1),
-                timingsList.get(0), timingsList.get(1),
+                ffmpegStart, ffmpegEnd,                          // [0:v] yt trim
+                fillerTimingsList.get(0), fillerTimingsList.get(1), // [1:v] filler trim
+                ffmpegStart, ffmpegEnd,                          // [0:a] audio trim
                 rate,
-                (timingsList.get(1) - timingsList.get(0)),
+                duration,
                 crf,
                 hash
         );
-
-        System.out.println(command);
-
-
-
-
-
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
