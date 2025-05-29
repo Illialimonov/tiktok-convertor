@@ -76,6 +76,17 @@ public class MainController {
         int dlStart = Math.max(0, timingsList.get(0) - 10);
         int dlEnd = timingsList.get(1) + 10;
 
+
+        System.out.println(httpTest.getFormat(youtubeUrl));
+        String format;
+        if(httpTest.getFormat(youtubeUrl).equals("616")){//TODO
+            format=httpTest.getNextAvailableFormat(youtubeUrl) +"+bestaudio";
+        } else {
+            format = "bestvideo[height<=1080]+bestaudio";
+        }
+
+        System.out.println("format");
+
         int ffmpegStart = timingsList.get(0) - dlStart; // should be ~10
         int ffmpegEnd = timingsList.get(1) - dlStart;   // should be (end - start) + 10
         int duration = ffmpegEnd - ffmpegStart;         // safe fallback for `-t` in ffmpeg
@@ -88,11 +99,11 @@ public class MainController {
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
-                        "-4 --proxy \"https://customer-lymonov_RgfaH-sessid-0050345537-sesstime-10:Ilialimonov05+@pr.oxylabs.io:7777\" " +
+                        "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
-                        "-f \"bestvideo[height<=%d]+bestaudio\" -o - \"%s\" | " +
-                        "ffmpeg " +
+                        "-f \"%s\" -o - \"%s\" | " +
+                        "ffmpeg -thread_queue_size 512 " +
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
                         "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
@@ -103,7 +114,7 @@ public class MainController {
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 dlStart,
                 dlEnd,
-                quality,
+                format,
                 youtubeUrl,
                 fillerVideo,
                 ffmpegStart, ffmpegEnd,                          // [0:v] yt trim
@@ -134,8 +145,8 @@ public class MainController {
     }
 
     private static int getCrfBaseOnRole(String role) {
-        if (role.equals("PREMIUM")) return 23;
-        if (role.equals("PRO")) return 21;
+        if (role.equals("PREMIUM")) return 21;
+        if (role.equals("PRO")) return 23;
         return 28;
     }
 
@@ -145,8 +156,8 @@ public class MainController {
     }
 
     private static int getQualityBasedOnRole(String role) {
-        if (role.equals("PREMIUM")) return 720;
-        if (role.equals("PRO")) return 1080;
+        if (role.equals("PREMIUM")) return 1080;
+        if (role.equals("PRO")) return 720;
         return 480;
     }
 
@@ -206,5 +217,9 @@ public class MainController {
         byte[] bytes = new byte[9]; // 9 bytes ≈ 12 Base64 characters
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(httpTest.getFormat("https://www.youtube.com/watch?v=oYf_9QGH62w"));
     }
 }
