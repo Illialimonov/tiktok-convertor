@@ -17,6 +17,9 @@ public class CreateVideoDTO {
     @NotNull
     private String role;
 
+    @NotNull
+    private boolean subs;
+
     // ✅ Default constructor (required for Spring & Jackson)
     public CreateVideoDTO() {
     }
@@ -61,5 +64,13 @@ public class CreateVideoDTO {
 
     public void setFillerVideo(String fillerVideo) {
         this.fillerVideo = fillerVideo;
+    }
+
+    public boolean isSubs() {
+        return subs;
+    }
+
+    public void setSubs(boolean subs) {
+        this.subs = subs;
     }
 }

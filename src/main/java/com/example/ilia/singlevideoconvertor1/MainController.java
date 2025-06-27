@@ -9,7 +9,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -29,69 +37,38 @@ public class MainController {
     @PostMapping("/create")
     public String getVideo(@RequestBody CreateVideoDTO video) throws IOException, InterruptedException {
         System.out.println(video.getYoutubeUrl());
-        return runCommand(video.getYoutubeUrl(), video.getTimingsList(), video.getFillerVideo(), video.getRole());
+        return runCommand(video.getYoutubeUrl(), video.getTimingsList(), video.getFillerVideo(), video.getRole(), video.isSubs());
     }
 
-    @PostMapping("/picture")
-    public String pic(@RequestBody PictureDTO pic) throws IOException, InterruptedException {
-        System.out.println(pic.getVideoURL());
-        return getPic(pic.getVideoURL());
-    }
 
-    private String getPic(String videoURL) throws IOException {
+
+
+
+    public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role, boolean subtitles) throws InterruptedException, IOException {
         String hash = generateUniqueHash();
-        String command = String.format("ffmpeg -i \"%s\"" +
-                        " -frames:v 1 -q:v 2 -f image2pipe -vcodec png - | gsutil cp - gs://tiktok1234/%s.png"
-                ,videoURL,
-                hash
-        );
-        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(Thread.currentThread().getName() + ": " + line);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        return "https://storage.googleapis.com/tiktok1234/"+ hash +".png";
-
-    }
-
-
-
-
-    public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role) throws InterruptedException, IOException {
+        String subs = ";";
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash);
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
         adjustForFiller(fillerTimingsList, fillerVideo);
-        String hash = generateUniqueHash();
-        int quality = getQualityBasedOnRole(role);
         int rate = getRateBasedOnRole(role);
         int crf = getCrfBaseOnRole(role);
         int dlStart = Math.max(0, timingsList.get(0) - 10);
         int dlEnd = timingsList.get(1) + 10;
 
-
-        System.out.println(httpTest.getFormat(youtubeUrl));
-        String format;
-        if(httpTest.getFormat(youtubeUrl).equals("616")){//TODO
+        int ffmpegStart = timingsList.get(0) - dlStart; // should be ~10
+        int ffmpegEnd = timingsList.get(1) - dlStart;   // should be (end - start) + 10
+        int duration = ffmpegEnd - ffmpegStart;         // safe fallback for `-t` in ffmpeg
+        String format = httpTest.getFormat(youtubeUrl);
+        System.out.println("video format ffmpeg = " + format);
+        if(format.equals("616") || format.equals("617") || format.equals("614") || format.equals("609") || format.equals("606") || format.equals("605") || format.equals("604")){
             format=httpTest.getNextAvailableFormat(youtubeUrl) +"+bestaudio";
+
         } else {
             format = "bestvideo[height<=1080]+bestaudio";
         }
 
-        System.out.println("format");
 
-        int ffmpegStart = timingsList.get(0) - dlStart; // should be ~10
-        int ffmpegEnd = timingsList.get(1) - dlStart;   // should be (end - start) + 10
-        int duration = ffmpegEnd - ffmpegStart;         // safe fallback for `-t` in ffmpeg
-
-        System.out.println("MY QUALITY IS " + quality);
         System.out.println("MY RATE  IS " + rate);
         System.out.println("MY RATE  IS " + crf);
 
@@ -103,9 +80,9 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -thread_queue_size 512 " +
+                        "ffmpeg -thread_queue_size 512 -threads 0 " +
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
+                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt] " + subs +
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[v]; " +
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
@@ -142,6 +119,78 @@ public class MainController {
         process.waitFor();
         System.out.println(Thread.currentThread().getName() + " finished execution.");
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
+    }
+
+    private static String subsLogicPre(String youtubeUrl, String hash) throws IOException {
+        String command = String.format(
+                "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
+                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s.%%(ext)s' '%s'",
+                hash,youtubeUrl
+        );
+
+        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(Thread.currentThread().getName() + ": " + line);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        String command2 = String.format("curl https://api.openai.com/v1/audio/transcriptions \\\n" +
+                "  -H \"Authorization: Bearer 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\" \\\n" +
+                "  -H \"Content-Type: multipart/form-data\" \\\n" +
+                "  -F file=\"@%s.m4a\" \\\n" +
+                "  -F model=\"whisper-1\" \\\n" +
+                "  -F response_format=\"verbose_json\" \\\n" +
+                "  -F \"timestamp_granularities[]=word\" > transcription.json", hash);
+
+        builder = new ProcessBuilder("bash", "-c", command2);
+        builder.redirectErrorStream(true);
+        process = builder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(Thread.currentThread().getName() + ": " + line);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        HttpClient client = HttpClient.newHttpClient();
+        String jsonToProcess = new String(Files.readAllBytes(Paths.get("transcription.json")), StandardCharsets.UTF_8);
+        String requestBody = "{\"jsonsubs\":" + jsonToProcess + "}";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://sub-around-295548041717.us-central1.run.app/convert-json-to-ass"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = null;
+        try {
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        Path path = Paths.get("subs.ass");
+        Files.writeString(path, response.body());
+
+        Files.deleteIfExists(Paths.get("subs.ass"));
+        Files.deleteIfExists(Paths.get("transcription.json"));
+
+
+        return "ass=subs.ass;";
+
+
     }
 
     private static int getCrfBaseOnRole(String role) {
@@ -219,7 +268,4 @@ public class MainController {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
     }
 
-    public static void main(String[] args) {
-        System.out.println(httpTest.getFormat("https://www.youtube.com/watch?v=oYf_9QGH62w"));
-    }
 }
