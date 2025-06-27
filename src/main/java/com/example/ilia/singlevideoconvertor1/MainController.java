@@ -1,9 +1,12 @@
 package com.example.ilia.singlevideoconvertor1;
 
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.net.URI;
@@ -176,55 +179,30 @@ public class MainController {
     private static void sendToWhisperAPI(String hash) throws IOException, InterruptedException {
         System.out.println("start sending");
 
-        String boundary = "----WhisperBoundary" + UUID.randomUUID();
-        String apiKey = "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";  // Replace with your key
-        Path audioFilePath = Path.of(hash + ".m4a");
+        String filePath = hash+".m4a"; // replace with your file path
+        String apiKey = "Bearer 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"; // replace with your key
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(bos);
+        FileSystemResource audioFile = new FileSystemResource(new File(filePath));
 
-        // File part
-        out.writeBytes("--" + boundary + "\r\n");
-        out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + hash + ".m4a\"\r\n");
-        out.writeBytes("Content-Type: audio/mpeg\r\n\r\n");
-        out.write(Files.readAllBytes(audioFilePath));
-        out.writeBytes("\r\n");
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", audioFile);
+        body.add("model", "whisper-1");
+        body.add("response_format", "verbose_json");
+        body.add("timestamp_granularities[]", "word");
 
-        // Model part
-        out.writeBytes("--" + boundary + "\r\n");
-        out.writeBytes("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
-        out.writeBytes("whisper-1\r\n");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.set("Authorization", apiKey);
 
-        // Response format
-        out.writeBytes("--" + boundary + "\r\n");
-        out.writeBytes("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
-        out.writeBytes("verbose_json\r\n");
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-        // Granularities
-        for (String granularity : List.of("segment", "word")) {
-            out.writeBytes("--" + boundary + "\r\n");
-            out.writeBytes("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
-            out.writeBytes(granularity + "\r\n");
-        }
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "https://api.openai.com/v1/audio/transcriptions";
 
-        // End boundary
-        out.writeBytes("--" + boundary + "--\r\n");
-        out.flush();
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        System.out.println("Status code: " + response.getStatusCode());
+        System.out.println("Body: " + response.getBody());
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.openai.com/v1/audio/transcriptions"))
-                .header("Authorization", "Bearer " + apiKey)
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(bos.toByteArray()))
-                .build();
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        System.out.println("Status: " + response.statusCode());
-        System.out.println("Response: " + response.body());
-
-        Files.writeString(Paths.get("transcription.json"), response.body(), StandardCharsets.UTF_8);
     }
 
 
