@@ -203,6 +203,14 @@ public class MainController {
         System.out.println("Status code: " + response.getStatusCode());
         System.out.println("Body: " + response.getBody());
 
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Files.write(Paths.get("transcription.json"), response.getBody().getBytes());
+            System.out.println("Saved to transcription.json");
+        } else {
+            System.out.println("Request failed: " + response.getStatusCode());
+            System.out.println("Body: " + response.getBody());
+        }
+
     }
 
 
