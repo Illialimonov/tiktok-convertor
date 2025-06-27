@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -121,7 +122,7 @@ public class MainController {
     private static String subsLogicPre(String youtubeUrl, String hash) throws IOException, InterruptedException {
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
-                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s.%%(ext)s' '%s'",
+                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s' '%s'",
                 hash,youtubeUrl
         );
 
@@ -172,50 +173,55 @@ public class MainController {
     }
 
     private static void sendToWhisperAPI(String hash) throws IOException, InterruptedException {
-        String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
-        HttpClient client = HttpClient.newHttpClient();
+        System.out.println("start sending");
+        String boundary = "----WhisperBoundary" + UUID.randomUUID();
+        String apiKey = "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";  // replace this
+        Path audioFilePath = Path.of(hash + ".m4a");
 
-        Path filePath = Paths.get(hash + ".m4a");
-        byte[] fileBytes = Files.readAllBytes(filePath);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(bos, "UTF-8"));
 
-        var byteStream = new ByteArrayOutputStream();
-        var writer = new PrintWriter(new OutputStreamWriter(byteStream, StandardCharsets.UTF_8), true);
-
-        // File field
-        writer.printf("--%s\r\n", boundary);
-        writer.printf("Content-Disposition: form-data; name=\"file\"; filename=\"%s.m4a\"\r\n", hash);
-        writer.printf("Content-Type: audio/m4a\r\n\r\n");
+        // Add audio file
+        writer.write("--" + boundary + "\r\n");
+        writer.write("Content-Disposition: form-data; name=\"file\"; filename=\"sua.mp3\"\r\n");
+        writer.write("Content-Type: audio/mpeg\r\n\r\n");
         writer.flush();
-        byteStream.write(fileBytes);
-        byteStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
+        bos.write(Files.readAllBytes(audioFilePath));
+        writer.write("\r\n");
 
-        // Model field
-        writer.printf("--%s\r\n", boundary);
-        writer.print("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
-        writer.print("whisper-1\r\n");
+        // Add model
+        writer.write("--" + boundary + "\r\n");
+        writer.write("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
+        writer.write("whisper-1\r\n");
 
-        // Response format
-        writer.printf("--%s\r\n", boundary);
-        writer.print("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
-        writer.print("verbose_json\r\n");
+        // Add response_format
+        writer.write("--" + boundary + "\r\n");
+        writer.write("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
+        writer.write("verbose_json\r\n");
 
-        // Timestamp granularities
-        writer.printf("--%s\r\n", boundary);
-        writer.print("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
-        writer.print("word\r\n");
+        // Add timestamp_granularities
+        for (String granularity : List.of("segment", "word")) {
+            writer.write("--" + boundary + "\r\n");
+            writer.write("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
+            writer.write(granularity + "\r\n");
+        }
 
-        // Finish
-        writer.printf("--%s--\r\n", boundary);
+        // End boundary
+        writer.write("--" + boundary + "--\r\n");
         writer.flush();
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.openai.com/v1/audio/transcriptions"))
-                .header("Authorization", "Bearer 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")
+                .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(byteStream.toByteArray()))
+                .POST(HttpRequest.BodyPublishers.ofByteArray(bos.toByteArray()))
                 .build();
 
+        HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("Status: " + response.statusCode());
+        System.out.println("Response: " + response.body());
 
         Files.writeString(Paths.get("transcription.json"), response.body(), StandardCharsets.UTF_8);
         System.out.println("Transcription saved to transcription.json");
