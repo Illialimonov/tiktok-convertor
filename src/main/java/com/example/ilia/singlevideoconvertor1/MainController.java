@@ -44,7 +44,7 @@ public class MainController {
 
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role, boolean subtitles) throws InterruptedException, IOException {
         String hash = generateUniqueHash();
-        String subs = ";";
+        String subs = "";
         if (subtitles) subs = subsLogicPre(youtubeUrl, hash);
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
@@ -79,10 +79,11 @@ public class MainController {
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
                         "ffmpeg -thread_queue_size 512 -threads 0 " +
-                        "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt] " + subs +
+                        "-i " + subs + " pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
+                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[v]; " +
+                        subs +
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
                         "-map \"[v]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
@@ -167,7 +168,7 @@ public class MainController {
         Files.deleteIfExists(Paths.get("transcription.json"));
 
 
-        return "ass=subs.ass;";
+        return "[subbed]ass=subs.ass[v]; ";
 
 
     }
