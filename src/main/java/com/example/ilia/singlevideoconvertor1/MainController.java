@@ -5,10 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
@@ -121,7 +118,7 @@ public class MainController {
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash) throws IOException {
+    private static String subsLogicPre(String youtubeUrl, String hash) throws IOException, InterruptedException {
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s.%%(ext)s' '%s'",
@@ -141,26 +138,7 @@ public class MainController {
             throw new RuntimeException(ex);
         }
 
-        String command2 = String.format("curl https://api.openai.com/v1/audio/transcriptions \\\n" +
-                "  -H \"Authorization: Bearer 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\" \\\n" +
-                "  -H \"Content-Type: multipart/form-data\" \\\n" +
-                "  -F file=\"@%s.m4a\" \\\n" +
-                "  -F model=\"whisper-1\" \\\n" +
-                "  -F response_format=\"verbose_json\" \\\n" +
-                "  -F \"timestamp_granularities[]=word\" > transcription.json", hash);
-
-        builder = new ProcessBuilder("bash", "-c", command2);
-        builder.redirectErrorStream(true);
-        process = builder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(Thread.currentThread().getName() + ": " + line);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+        sendToWhisperAPI(hash);
 
         HttpClient client = HttpClient.newHttpClient();
         String jsonToProcess = new String(Files.readAllBytes(Paths.get("transcription.json")), StandardCharsets.UTF_8);
@@ -192,6 +170,57 @@ public class MainController {
 
 
     }
+
+    private static void sendToWhisperAPI(String hash) throws IOException, InterruptedException {
+        String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
+        HttpClient client = HttpClient.newHttpClient();
+
+        Path filePath = Paths.get(hash + ".m4a");
+        byte[] fileBytes = Files.readAllBytes(filePath);
+
+        var byteStream = new ByteArrayOutputStream();
+        var writer = new PrintWriter(new OutputStreamWriter(byteStream, StandardCharsets.UTF_8), true);
+
+        // File field
+        writer.printf("--%s\r\n", boundary);
+        writer.printf("Content-Disposition: form-data; name=\"file\"; filename=\"%s.m4a\"\r\n", hash);
+        writer.printf("Content-Type: audio/m4a\r\n\r\n");
+        writer.flush();
+        byteStream.write(fileBytes);
+        byteStream.write("\r\n".getBytes(StandardCharsets.UTF_8));
+
+        // Model field
+        writer.printf("--%s\r\n", boundary);
+        writer.print("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
+        writer.print("whisper-1\r\n");
+
+        // Response format
+        writer.printf("--%s\r\n", boundary);
+        writer.print("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
+        writer.print("verbose_json\r\n");
+
+        // Timestamp granularities
+        writer.printf("--%s\r\n", boundary);
+        writer.print("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
+        writer.print("word\r\n");
+
+        // Finish
+        writer.printf("--%s--\r\n", boundary);
+        writer.flush();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.openai.com/v1/audio/transcriptions"))
+                .header("Authorization", "Bearer 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")
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofByteArray(byteStream.toByteArray()))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        Files.writeString(Paths.get("transcription.json"), response.body(), StandardCharsets.UTF_8);
+        System.out.println("Transcription saved to transcription.json");
+    }
+
 
     private static int getCrfBaseOnRole(String role) {
         if (role.equals("PREMIUM")) return 21;
