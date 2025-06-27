@@ -168,7 +168,7 @@ public class MainController {
         Files.deleteIfExists(Paths.get("transcription.json"));
 
 
-        return "[subbed]ass=subs.ass[v]; ";
+        return "[padded]ass=subs.ass[v]; ";
 
 
     }
