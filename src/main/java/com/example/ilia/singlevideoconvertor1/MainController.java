@@ -177,7 +177,7 @@ public class MainController {
         System.out.println("start sending");
 
         String boundary = "----WhisperBoundary" + UUID.randomUUID();
-        String apiKey = "your-api-key-here";  // Replace with your key
+        String apiKey = "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";  // Replace with your key
         Path audioFilePath = Path.of(hash + ".m4a");
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
