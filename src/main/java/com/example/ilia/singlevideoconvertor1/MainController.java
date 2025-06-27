@@ -79,7 +79,7 @@ public class MainController {
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
                         "ffmpeg -thread_queue_size 512 -threads 0 " +
-                        "-i " + subs + " pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
+                        "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
                         "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[v]; " +
@@ -175,41 +175,41 @@ public class MainController {
 
     private static void sendToWhisperAPI(String hash) throws IOException, InterruptedException {
         System.out.println("start sending");
+
         String boundary = "----WhisperBoundary" + UUID.randomUUID();
-        String apiKey = "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";  // replace this
+        String apiKey = "your-api-key-here";  // Replace with your key
         Path audioFilePath = Path.of(hash + ".m4a");
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(bos, "UTF-8"));
+        DataOutputStream out = new DataOutputStream(bos);
 
-        // Add audio file
-        writer.write("--" + boundary + "\r\n");
-        writer.write("Content-Disposition: form-data; name=\"file\"; filename=\""+hash+".m4a\"\r\n");
-        writer.write("Content-Type: audio/mpeg\r\n\r\n");
-        writer.flush();
-        bos.write(Files.readAllBytes(audioFilePath));
-        writer.write("\r\n");
+        // File part
+        out.writeBytes("--" + boundary + "\r\n");
+        out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + hash + ".m4a\"\r\n");
+        out.writeBytes("Content-Type: audio/mpeg\r\n\r\n");
+        out.write(Files.readAllBytes(audioFilePath));
+        out.writeBytes("\r\n");
 
-        // Add model
-        writer.write("--" + boundary + "\r\n");
-        writer.write("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
-        writer.write("whisper-1\r\n");
+        // Model part
+        out.writeBytes("--" + boundary + "\r\n");
+        out.writeBytes("Content-Disposition: form-data; name=\"model\"\r\n\r\n");
+        out.writeBytes("whisper-1\r\n");
 
-        // Add response_format
-        writer.write("--" + boundary + "\r\n");
-        writer.write("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
-        writer.write("verbose_json\r\n");
+        // Response format
+        out.writeBytes("--" + boundary + "\r\n");
+        out.writeBytes("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n");
+        out.writeBytes("verbose_json\r\n");
 
-        // Add timestamp_granularities
+        // Granularities
         for (String granularity : List.of("segment", "word")) {
-            writer.write("--" + boundary + "\r\n");
-            writer.write("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
-            writer.write(granularity + "\r\n");
+            out.writeBytes("--" + boundary + "\r\n");
+            out.writeBytes("Content-Disposition: form-data; name=\"timestamp_granularities[]\"\r\n\r\n");
+            out.writeBytes(granularity + "\r\n");
         }
 
         // End boundary
-        writer.write("--" + boundary + "--\r\n");
-        writer.flush();
+        out.writeBytes("--" + boundary + "--\r\n");
+        out.flush();
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.openai.com/v1/audio/transcriptions"))
@@ -225,8 +225,8 @@ public class MainController {
         System.out.println("Response: " + response.body());
 
         Files.writeString(Paths.get("transcription.json"), response.body(), StandardCharsets.UTF_8);
-        System.out.println("Transcription saved to transcription.json");
     }
+
 
 
     private static int getCrfBaseOnRole(String role) {
