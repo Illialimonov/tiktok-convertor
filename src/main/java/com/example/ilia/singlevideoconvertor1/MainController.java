@@ -3,6 +3,7 @@ package com.example.ilia.singlevideoconvertor1;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -145,27 +146,38 @@ public class MainController {
 
         sendToWhisperAPI(hash);
 
-        HttpClient client = HttpClient.newHttpClient();
-        String jsonToProcess = new String(Files.readAllBytes(Paths.get("transcription.json")), StandardCharsets.UTF_8);
+        // Read the large JSON file
+        String jsonToProcess = Files.readString(Paths.get("transcription.json"), StandardCharsets.UTF_8);
         String requestBody = "{\"jsonsubs\":" + jsonToProcess + "}";
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://sub-around-295548041717.us-central1.run.app/convert-json-to-ass"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
+        // Create headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpResponse<String> response = null;
-        try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        // Build the HTTP entity
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
 
-        Path path = Paths.get("subs.ass");
-        Files.writeString(path, response.body());
+        // Create the RestTemplate and increase buffer size if needed
+        RestTemplate restTemplate = new RestTemplate();
+
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);
+        factory.setReadTimeout(300_000);
+        restTemplate.setRequestFactory(factory);
+
+
+        // Send the POST request
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "https://sub-around-295548041717.us-central1.run.app/convert-json-to-ass",
+                requestEntity,
+                String.class
+        );
+
+        // Write the result to a file
+        Files.writeString(Paths.get("subs.ass"), response.getBody(), StandardCharsets.UTF_8);
+        System.out.println("Subtitles saved to subs.ass");
+
 
 
 
