@@ -17,7 +17,6 @@ public class CreateVideoDTO {
     @NotNull
     private String role;
 
-    @NotNull
     private boolean subs;
 
     // ✅ Default constructor (required for Spring & Jackson)
