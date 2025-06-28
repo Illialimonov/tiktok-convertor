@@ -147,36 +147,33 @@ public class MainController {
         sendToWhisperAPI(hash);
 
         // Read the large JSON file
-        String jsonToProcess = Files.readString(Paths.get("transcription.json"), StandardCharsets.UTF_8);
-        String requestBody = "{\"jsonsubs\":" + jsonToProcess + "}";
-
-        // Create headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        // Build the HTTP entity
-        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        // Create the RestTemplate and increase buffer size if needed
         RestTemplate restTemplate = new RestTemplate();
 
-
+// Allow large payloads (set streaming)
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10_000);
-        factory.setReadTimeout(300_000);
         restTemplate.setRequestFactory(factory);
 
+// Headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        // Send the POST request
+// Build multipart request
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource("transcription.json")); // 👈 upload as a file
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+// Send request
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "https://sub-around-295548041717.us-central1.run.app/convert-json-to-ass",
                 requestEntity,
                 String.class
         );
 
-        // Write the result to a file
+// Save response
         Files.writeString(Paths.get("subs.ass"), response.getBody(), StandardCharsets.UTF_8);
         System.out.println("Subtitles saved to subs.ass");
+
 
 
 
