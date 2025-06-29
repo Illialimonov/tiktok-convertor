@@ -50,6 +50,7 @@ public class MainController {
         String hash = generateUniqueHash();
         String subs = "";
         if (subtitles) subs = subsLogicPre(youtubeUrl, hash);
+        String finalVideoLabel = subtitles ? "v" : "padded";
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
         adjustForFiller(fillerTimingsList, fillerVideo);
@@ -89,7 +90,7 @@ public class MainController {
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
                         subs + //"subs "
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[v]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
+                        "-map \"[" + finalVideoLabel + "]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 dlStart,
