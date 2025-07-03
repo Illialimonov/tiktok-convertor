@@ -49,7 +49,7 @@ public class MainController {
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role, boolean subtitles) throws InterruptedException, IOException {
         String hash = generateUniqueHash();
         String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash);
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, timingsList);
         String finalVideoLabel = subtitles ? "v" : "padded";
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
@@ -132,7 +132,7 @@ public class MainController {
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash) throws IOException, InterruptedException {
+    private static String subsLogicPre(String youtubeUrl, String hash, List<Integer> timingList) throws IOException, InterruptedException {
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s' '%s'",
@@ -152,7 +152,7 @@ public class MainController {
             throw new RuntimeException(ex);
         }
 
-        sendToWhisperAPI(hash);
+        sendToWhisperAPI(hash, timingList);
 
         // Read the large JSON file
         RestTemplate restTemplate = new RestTemplate();
@@ -203,7 +203,7 @@ public class MainController {
 
     }
 
-    private static void sendToWhisperAPI(String hash) throws IOException, InterruptedException {
+    private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
         System.out.println("start sending");
 
         String filePath = hash+".m4a"; // replace with your file path
