@@ -204,9 +204,30 @@ public class MainController {
     }
 
     private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
+        int startPoint = (timingList.get(0));
+        int endPoint = (timingList.get(1));
+        String outputName = hash+"_chopped.m4a";
+        String command = String.format(
+                "ffmpeg -i \"%s.m4a\" -ss %s -t %s -c copy \"%s.m4a\"",
+                hash, startPoint, endPoint, outputName
+        );
+
+        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(Thread.currentThread().getName() + ": " + line);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
         System.out.println("start sending");
 
-        String filePath = hash+".m4a"; // replace with your file path
+        String filePath = hash+"_chopped.m4a"; // replace with your file path
         String apiKey = "Bearer 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"; // replace with your key
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
