@@ -206,7 +206,7 @@ public class MainController {
     private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
         int startPoint = (timingList.get(0));
         int endPoint = (timingList.get(1));
-        String outputName = hash+"_chopped.m4a";
+        String outputName = hash+"_chopped";
         String command = String.format(
                 "ffmpeg -i \"%s.m4a\" -ss %s -t %s -c copy \"%s.m4a\"",
                 hash, startPoint, endPoint, outputName
