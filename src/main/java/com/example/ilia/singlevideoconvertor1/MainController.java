@@ -207,10 +207,12 @@ public class MainController {
         int startPoint = (timingList.get(0));
         int endPoint = (timingList.get(1));
         String outputName = hash+"_chopped";
+        int duration = endPoint - startPoint;
         String command = String.format(
-                "ffmpeg -i \"%s.m4a\" -ss %s -t %s -c copy \"%s.m4a\"",
-                hash, startPoint, endPoint, outputName
+                "ffmpeg -i \"%s.m4a\" -ss %d -t %d -c copy \"%s.m4a\"",
+                hash, startPoint, duration, outputName
         );
+
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
