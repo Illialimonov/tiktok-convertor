@@ -41,7 +41,7 @@ public class httpTest {
             Thread.currentThread().interrupt();
         }
 
-        List<Integer> forbiddenFormats = List.of(602, 604, 605, 606, 609, 614, 616);
+        List<Integer> forbiddenFormats = List.of(602, 604, 605, 606, 609, 614, 616, 617);
         String[] out = output.toString().split("\n");
         List<String> change = List.of(out);
         for (int i = 1; i < change.size(); i++) {
