@@ -204,8 +204,8 @@ public class MainController {
     }
 
     private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
-        int startPoint = (timingList.get(0));
-        int endPoint = (timingList.get(1));
+        int startPoint = (timingList.get(0) > 10) ? timingList.get(0)-10 : timingList.get(0);
+        int endPoint = (timingList.get(1)-10);
         String outputName = hash+"_chopped";
         int duration = endPoint - startPoint;
         String command = String.format(
