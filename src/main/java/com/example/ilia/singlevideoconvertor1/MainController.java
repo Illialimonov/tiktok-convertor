@@ -197,9 +197,9 @@ public class MainController {
 
         ProcessBuilder builder1 = new ProcessBuilder("bash", "-c", command1);
         builder.redirectErrorStream(true);
-        Process process1 = builder.start();
+        Process process1 = builder1.start();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println(Thread.currentThread().getName() + ": " + line);
