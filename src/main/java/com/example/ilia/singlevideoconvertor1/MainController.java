@@ -48,9 +48,8 @@ public class MainController {
 
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role, boolean subtitles) throws InterruptedException, IOException {
         String hash = generateUniqueHash();
-        String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, timingsList);
-        String finalVideoLabel = subtitles ? "v" : "padded";
+//        String subs = "";
+//        String finalVideoLabel = subtitles ? "v" : "padded";
         fillerVideo = checkIfRandom(fillerVideo);
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
         adjustForFiller(fillerTimingsList, fillerVideo);
@@ -88,9 +87,8 @@ public class MainController {
                         "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
-                        subs + //"subs "
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[" + finalVideoLabel + "]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
+                        "-map \"[padded]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 dlStart,
@@ -129,14 +127,19 @@ public class MainController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        subsLogicPost(youtubeUrl,hash,timingsList);
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash, List<Integer> timingList) throws IOException, InterruptedException {
+    private static String subsLogicPost(String youtubeUrl, String hash, List<Integer> timingList) throws IOException, InterruptedException {
+        //TODO 1) convert the video regularly,
+        // 2) extract the audio from it locally
+        // 3) send it to whisper AI
+        // d4) send them to format ass correctly 5)burn them into the initial video 6) cleanup everything.
         String command = String.format(
-                "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
-                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s' '%s'",
-                hash,youtubeUrl
+                "ffmpeg -i \"https://storage.googleapis.com/tiktokclips1234/%s.mp4\"" +
+                        " -vn -acodec aac -b:a 128k %s_audio.m4a\n",
+                hash,hash
         );
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
@@ -182,6 +185,31 @@ public class MainController {
         Files.writeString(Paths.get("subs.ass"), response.getBody(), StandardCharsets.UTF_8);
         System.out.println("Subtitles saved to subs.ass");
 
+        //burn subs
+
+        String command1 = String.format(
+                "ffmpeg -i \"https://storage.googleapis.com/bucket/tiktokclips1234/%s.mp4\" -vf \"ass=subs.ass\" -c:a copy -f mp4 - | \\\n" +
+                        "gsutil cp - gs://tiktokclips1234/%s.mp4\n",
+                hash,hash
+        );
+
+        ProcessBuilder builder1 = new ProcessBuilder("bash", "-c", command1);
+        builder.redirectErrorStream(true);
+        Process process1 = builder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(Thread.currentThread().getName() + ": " + line);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+
+
+        //cleanup
+
         try {
             Path path = Paths.get("transcription.json");
             Files.deleteIfExists(path);
@@ -204,32 +232,9 @@ public class MainController {
     }
 
     private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
-        int startPoint = (timingList.get(0) > 10) ? timingList.get(0)-10 : timingList.get(0);
-        int endPoint = (timingList.get(1)-10);
-        String outputName = hash+"_chopped";
-        int duration = endPoint - startPoint;
-        String command = String.format(
-                "ffmpeg -i \"%s.m4a\" -ss %d -t %d -c copy \"%s.m4a\"",
-                hash, startPoint, duration, outputName
-        );
-
-
-        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(Thread.currentThread().getName() + ": " + line);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
         System.out.println("start sending");
 
-        String filePath = hash+"_chopped.m4a"; // replace with your file path
+        String filePath = hash+"_audio.m4a"; // replace with your file path
         String apiKey = "Bearer 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"; // replace with your key
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
