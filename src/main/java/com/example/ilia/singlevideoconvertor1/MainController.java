@@ -188,7 +188,9 @@ public class MainController {
         //burn subs
 
         String command1 = String.format(
-                "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" -vf \"ass=subs.ass\" -c:a copy -f mp4 - | \\\n" +
+                "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" \\\n" +
+                        "-vf \"ass=subs.ass\" -c:v libx264 -preset ultrafast -c:a copy \\\n" +
+                        "-movflags frag_keyframe+empty_moov -f mp4 - | \\\n" +
                         "gsutil cp - gs://tiktok1234/%s.mp4\n",
                 hash,hash
         );
