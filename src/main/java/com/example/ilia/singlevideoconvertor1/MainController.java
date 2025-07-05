@@ -137,7 +137,7 @@ public class MainController {
         // 3) send it to whisper AI
         // d4) send them to format ass correctly 5)burn them into the initial video 6) cleanup everything.
         String command = String.format(
-                "ffmpeg -i \"https://storage.googleapis.com/tiktokclips1234/%s.mp4\"" +
+                "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\"" +
                         " -vn -acodec aac -b:a 128k %s_audio.m4a\n",
                 hash,hash
         );
@@ -188,8 +188,8 @@ public class MainController {
         //burn subs
 
         String command1 = String.format(
-                "ffmpeg -i \"https://storage.googleapis.com/bucket/tiktokclips1234/%s.mp4\" -vf \"ass=subs.ass\" -c:a copy -f mp4 - | \\\n" +
-                        "gsutil cp - gs://tiktokclips1234/%s.mp4\n",
+                "ffmpeg -i \"https://storage.googleapis.com/bucket/tiktok1234/%s.mp4\" -vf \"ass=subs.ass\" -c:a copy -f mp4 - | \\\n" +
+                        "gsutil cp - gs://tiktok1234/%s.mp4\n",
                 hash,hash
         );
 
