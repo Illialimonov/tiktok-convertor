@@ -145,7 +145,7 @@ public class MainController {
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "-f bestaudio[ext=m4a] -o \"%s.m4a\" \"%s\" && " + // 1. Download to temp file
                         "ffmpeg -hide_banner -loglevel error -ss %d -t %d -i \"%s.m4a\" " + // 2. Clip segment
-                        "-c:a m4a -b:a 128k -f adts \"%s_chopped.m4a\" && " + // 3. Output final .m4a
+                        "-c:a aac -b:a 128k -f adts \"%s_chopped.m4a\" && " + // 3. Output final .m4a
                         "rm \"%s.m4a\"", // 4. Delete temp file
                 dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash,hash
         );
