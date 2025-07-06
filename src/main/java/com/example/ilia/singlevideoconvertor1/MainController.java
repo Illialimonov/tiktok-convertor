@@ -48,20 +48,24 @@ public class MainController {
 
     public static String runCommand(String youtubeUrl,List<Integer> timingsList,String fillerVideo, String role, boolean subtitles) throws InterruptedException, IOException {
         String hash = generateUniqueHash();
-        String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, timingsList);
-        String finalVideoLabel = subtitles ? "v" : "padded";
-        fillerVideo = checkIfRandom(fillerVideo);
-        List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
-        adjustForFiller(fillerTimingsList, fillerVideo);
-        int rate = getRateBasedOnRole(role);
-        int crf = getCrfBaseOnRole(role);
         int dlStart = Math.max(0, timingsList.get(0) - 10);
         int dlEnd = timingsList.get(1) + 10;
 
         int ffmpegStart = timingsList.get(0) - dlStart; // should be ~10
-        int ffmpegEnd = timingsList.get(1) - dlStart;   // should be (end - start) + 10
-        int duration = ffmpegEnd - ffmpegStart;         // safe fallback for `-t` in ffmpeg
+        int ffmpegEnd = timingsList.get(1) - dlStart;
+        int duration = ffmpegEnd - ffmpegStart;
+
+        List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
+        adjustForFiller(fillerTimingsList, fillerVideo);// safe fallback for `-t` in ffmpeg
+
+        String subs = "";
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, duration, fillerTimingsList);
+        String finalVideoLabel = subtitles ? "v" : "padded";
+        fillerVideo = checkIfRandom(fillerVideo);
+
+        int rate = getRateBasedOnRole(role);
+        int crf = getCrfBaseOnRole(role);
+
         String format = httpTest.getFormat(youtubeUrl);
         System.out.println("video format ffmpeg = " + format);
         if(format.equals("616") || format.equals("617") || format.equals("614") || format.equals("609") || format.equals("606") || format.equals("605") || format.equals("604")){
@@ -132,12 +136,26 @@ public class MainController {
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash, List<Integer> timingList) throws IOException, InterruptedException {
+    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int duration, List<Integer> timingList) throws IOException, InterruptedException {
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
-                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp -x --audio-format m4a -o '%s' '%s'",
-                hash,youtubeUrl
+                        "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
+                        "--download-sections \"*%d-%d\" " +
+                        "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
+                        "--hls-prefer-ffmpeg " +
+                        "--extractor-args \"youtube:po_token=web.main+web\" " +
+                        "-f bestaudio[ext=m4a] -o - \"%s\" | " +
+                        "ffmpeg -ss %d -i pipe:0 -t %d -c copy \"%s_trimmed.m4a\"",
+                dlStart,                 // 1. yt-dlp padded start
+                dlEnd,                   // 2. yt-dlp padded end
+                youtubeUrl,              // 3. YouTube video URL
+                ffmpegStart,             // 4. how much to skip from pipe
+                duration,                // 5. how much audio to extract
+                hash                     // 6. output filename prefix
         );
+
+
+
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
