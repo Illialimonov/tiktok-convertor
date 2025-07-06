@@ -188,25 +188,29 @@ public class MainController {
         //burn subs
 
         String command1 = String.format(
-                "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" \\\n" +
-                        "-vf \"ass=subs.ass\" -c:v libx264 -preset ultrafast -c:a copy \\\n" +
-                        "-movflags frag_keyframe+empty_moov -f mp4 - | \\\n" +
-                        "gsutil cp - gs://tiktok1234/%s.mp4\n",
-                hash,hash
+                "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
+                        "-vf \"ass=subs.ass\" -c:v libx264 -preset ultrafast -c:a copy " +
+                        "-movflags frag_keyframe+empty_moov -f mp4 - | " +
+                        "gsutil cp - gs://tiktok1234/%s.mp4",
+                hash, hash
         );
 
         ProcessBuilder builder1 = new ProcessBuilder("bash", "-c", command1);
         builder.redirectErrorStream(true);
         Process process1 = builder1.start();
 
+// Print output and wait for process to complete
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process1.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(Thread.currentThread().getName() + ": " + line);
+                System.out.println("FFmpeg Output: " + line);
             }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            int exitCode = process1.waitFor();
+            System.out.println("Process exited with code: " + exitCode);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
+
 
 
 
