@@ -146,7 +146,7 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f bestaudio[ext=m4a] -o - \"%s\" | " +
-                        "ffmpeg -ss %d -i pipe:0 -t %d -c copy \"%s_trimmed.m4a\"",
+                        "ffmpeg -ss %d -i pipe:0 -t %d -c copy \"%s_chopped.m4a\"",
                 dlStart,                 // 1. yt-dlp padded start
                 dlEnd,                   // 2. yt-dlp padded end
                 youtubeUrl,              // 3. YouTube video URL
