@@ -227,28 +227,7 @@ public class MainController {
     }
 
     private static void sendToWhisperAPI(String hash, List<Integer> timingList) throws IOException, InterruptedException {
-        int startPoint = (timingList.get(0) > 10) ? timingList.get(0)-10 : timingList.get(0);
-        int endPoint = (timingList.get(1)-10);
-        String outputName = hash+"_chopped";
-        int duration = endPoint - startPoint;
-        String command = String.format(
-                "ffmpeg -i \"%s.m4a\" -ss %d -t %d -c copy \"%s.m4a\"",
-                hash, startPoint, duration, outputName
-        );
 
-
-        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(Thread.currentThread().getName() + ": " + line);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
 
         System.out.println("start sending");
 
