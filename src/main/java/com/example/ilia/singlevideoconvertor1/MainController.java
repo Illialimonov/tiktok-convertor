@@ -144,7 +144,7 @@ public class MainController {
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "-f bestaudio[ext=m4a] -o - \"%s\" | " +
-                        "ffmpeg -ss %d -i pipe:0 -t %d -c:a aac -b:a 128k \"%s_chopped.m4a\"",
+                        "ffmpeg -i pipe:0 -ss %d -t %d -c:a aac -b:a 128k \"%s_chopped.m4a\"", // -ss MOVED HERE
                 dlStart, dlEnd, youtubeUrl, ffmpegStart, duration, hash
         );
 
