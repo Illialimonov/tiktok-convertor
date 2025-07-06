@@ -169,6 +169,7 @@ public class MainController {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+        //hi
 
         sendToWhisperAPI(hash, timingList);
 
