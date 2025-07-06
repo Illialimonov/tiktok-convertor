@@ -147,7 +147,7 @@ public class MainController {
                         "ffmpeg -hide_banner -loglevel error -ss %d -t %d -i \"%s.m4a\" " + // 2. Clip segment
                         "-c:a aac -b:a 128k -f adts \"%s_chopped.aac\" && " + // 3. Output final .aac
                         "rm \"%s.m4a\"", // 4. Delete temp file
-                dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash
+                dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash,hash
         );
 
 
