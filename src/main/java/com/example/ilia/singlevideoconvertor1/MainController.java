@@ -196,7 +196,7 @@ public class MainController {
         );
 
         ProcessBuilder builder1 = new ProcessBuilder("bash", "-c", command1);
-        builder.redirectErrorStream(true);
+        builder1.redirectErrorStream(true);
         Process process1 = builder1.start();
 
 // Print output and wait for process to complete
