@@ -145,7 +145,7 @@ public class MainController {
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "-f bestaudio[ext=m4a] -o \"%s.m4a\" \"%s\" && " + // 1. Download to temp file
                         "ffmpeg -hide_banner -loglevel error -ss %d -t %d -i \"%s.m4a\" " + // 2. Clip segment
-                        "-c:a aac -b:a 128k -f \"%s_chopped.mp4\" && " + // 3. Output final .m4a
+                        "-c:a aac -b:a 128k -f \"%s_chopped.m4a\" && " + // 3. Output final .m4a
                         "rm \"%s.m4a\"", // 4. Delete temp file
                 dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash,hash
         );
@@ -231,7 +231,7 @@ public class MainController {
 
         System.out.println("start sending");
 
-        String filePath = hash+"_chopped.mp4"; // replace with your file path
+        String filePath = hash+"_chopped.m4a"; // replace with your file path
         String apiKey = "Bearer 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"; // replace with your key
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
