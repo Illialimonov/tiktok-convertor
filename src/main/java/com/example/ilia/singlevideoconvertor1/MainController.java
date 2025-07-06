@@ -130,7 +130,7 @@ public class MainController {
         try {
             Path path = Paths.get("subs.ass");
             Files.deleteIfExists(path);
-            System.out.println(hash+".acc deleted successfully");
+            System.out.println(hash+".m4a deleted successfully");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -145,7 +145,7 @@ public class MainController {
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "-f bestaudio[ext=m4a] -o \"%s.m4a\" \"%s\" && " + // 1. Download to temp file
                         "ffmpeg -hide_banner -loglevel error -ss %d -t %d -i \"%s.m4a\" " + // 2. Clip segment
-                        "-c:a aac -b:a 128k -f adts \"%s_chopped.aac\" && " + // 3. Output final .aac
+                        "-c:a aac -b:a 128k -f adts \"%s_chopped.m4a\" && " + // 3. Output final .aac
                         "rm \"%s.m4a\"", // 4. Delete temp file
                 dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash,hash
         );
@@ -214,9 +214,9 @@ public class MainController {
         }
 
         try {
-            Path path = Paths.get(hash+".acc");
+            Path path = Paths.get(hash+".m4a");
             Files.deleteIfExists(path);
-            System.out.println(hash+".acc deleted successfully");
+            System.out.println(hash+".m4a deleted successfully");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -231,7 +231,7 @@ public class MainController {
 
         System.out.println("start sending");
 
-        String filePath = hash+"_chopped.acc"; // replace with your file path
+        String filePath = hash+"_chopped.m4a"; // replace with your file path
         String apiKey = "Bearer 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"; // replace with your key
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
