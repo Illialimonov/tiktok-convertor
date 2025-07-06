@@ -236,6 +236,8 @@ public class MainController {
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
 
+        System.out.println(audioFile.contentLength());
+
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", audioFile);
         body.add("model", "whisper-1");
