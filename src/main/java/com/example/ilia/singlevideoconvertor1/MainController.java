@@ -143,12 +143,11 @@ public class MainController {
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "--hls-prefer-ffmpeg " +
-                        "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f bestaudio[ext=m4a] -o - \"%s\" | " +
                         "ffmpeg -ss %d -i pipe:0 -t %d -c:a aac -b:a 128k \"%s_chopped.m4a\"",
                 dlStart, dlEnd, youtubeUrl, ffmpegStart, duration, hash
         );
+
 
 
         //gi gi
