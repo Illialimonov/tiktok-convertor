@@ -143,7 +143,7 @@ public class MainController {
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "-f bestaudio[ext=m4a] -o - \"%s\" | " +
+                        "-f bestaudio[ext=aac] -o - \"%s\" | " +
                         "ffmpeg -hide_banner -loglevel error -i pipe:0 -ss %d -t %d -c:a aac -b:a 128k -f adts \"%s_chopped.aac\"",
                 dlStart, dlEnd, youtubeUrl, ffmpegStart, duration, hash
         );
