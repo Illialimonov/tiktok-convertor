@@ -110,6 +110,7 @@ public class MainController {
                 crf,
                 hash
         );
+        //hi
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
