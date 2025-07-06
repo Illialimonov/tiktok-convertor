@@ -189,11 +189,13 @@ public class MainController {
 
         String command1 = String.format(
                 "ffmpeg -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-vf \"ass=subs.ass\" -c:v libx264 -preset ultrafast -c:a copy " +
-                        "-movflags frag_keyframe+empty_moov -f mp4 - | " +
-                        "gsutil cp - gs://tiktok1234/%s.mp4",
-                hash, hash
+                        "-vf \"ass=subs.ass\" -c:v libx264 -preset ultrafast -threads 4 -c:a copy " +
+                        "-movflags +faststart -y %s.mp4 && " +
+                        "gsutil cp %s.mp4 gs://tiktok1234/%s.mp4 && " +
+                        "rm %s.mp4",
+                hash, hash, hash, hash, hash
         );
+
 
         ProcessBuilder builder1 = new ProcessBuilder("bash", "-c", command1);
         builder1.redirectErrorStream(true);
