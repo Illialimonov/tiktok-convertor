@@ -146,15 +146,10 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f bestaudio[ext=m4a] -o - \"%s\" | " +
-                        "ffmpeg -ss %d -i pipe:0 -t %d -c copy \"%s_chopped.m4a\"",
-                dlStart,                 // 1. yt-dlp padded start
-                dlEnd,                   // 2. yt-dlp padded end
-                youtubeUrl,              // 3. YouTube video URL
-                ffmpegStart,             // 4. how much to skip from pipe
-                duration,                // 5. how much audio to extract
-                hash
-                // 6. output filename prefix
+                        "ffmpeg -ss %d -i pipe:0 -t %d -c:a aac -b:a 128k \"%s_chopped.m4a\"",
+                dlStart, dlEnd, youtubeUrl, ffmpegStart, duration, hash
         );
+
 
         //gi gi
 
