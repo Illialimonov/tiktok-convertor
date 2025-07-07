@@ -145,20 +145,17 @@ public class MainController {
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
+                         "--force-keyframes-at-cuts " + // Optional, uncomment if needed and doesn't slow down too much
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "-f \"%s\" -o temp_audio.m4a \"%s\" && " +
-                        "ffmpeg -threads 0 -ss %d -to %d " +
-                        "-i temp_audio.m4a " +
-                        "-c:a aac -b:a 192k -vn " +
-                        "-movflags +faststart " +
-                        "%s_chopped.m4a && rm temp_audio.m4a",
-                dlStart,
-                dlEnd,
-                format,
-                youtubeUrl,
-                ffmpegStart,
-                ffmpegEnd,
-                hash
+                        "--hls-prefer-ffmpeg " +
+                        "--extractor-args \"youtube:po_token=web.main+web\" " +
+                        "-f bestaudio[ext=m4a] " + // Specific format for best m4a audio
+                        "--extract-audio --audio-format m4a --audio-quality 0 " + // Ensure conversion if necessary
+                        "-o \"/%s_chopped.m4a\" \"%s\"", // Local output file path and YouTube URL
+                dlStart,                     // %d for --download-sections start
+                dlEnd,                       // %d for --download-sections end
+                hash,                        // %s for the output filename (e.g., /tmp/yourhash_audio.m4a)
+                youtubeUrl                   // %s for the YouTube URL
         );
 
 
