@@ -145,15 +145,12 @@ public class MainController {
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "--hls-prefer-ffmpeg " +
-                        "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
                         "ffmpeg -thread_queue_size 512 -threads 0 " +
                         "-i pipe:0 " +
                         "-ss %d -to %d " +             // start and end trim in seconds
                         "-c:a aac -b:a 192k -vn " +    // audio codec and no video
                         "-movflags frag_keyframe+empty_moov " +
-                        "-f mp4 " +
                         "%s_chopped.m4a",
                 dlStart,
                 dlEnd,
@@ -163,18 +160,6 @@ public class MainController {
                 ffmpegEnd,
                 hash
         );
-
-
-
-
-
-
-
-
-        //gi gi
-
-
-
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
