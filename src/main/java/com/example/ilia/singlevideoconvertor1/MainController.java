@@ -147,10 +147,8 @@ public class MainController {
                         "--download-sections \"*%d-%d\" " +
                          "--force-keyframes-at-cuts " + // Optional, uncomment if needed and doesn't slow down too much
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f bestaudio[ext=m4a] " + // Specific format for best m4a audio
-                        "--extract-audio --audio-format m4a --audio-quality 0 " + // Ensure conversion if necessary
                         "-o \"/%s_chopped.m4a\" \"%s\"", // Local output file path and YouTube URL
                 dlStart,                     // %d for --download-sections start
                 dlEnd,                       // %d for --download-sections end
