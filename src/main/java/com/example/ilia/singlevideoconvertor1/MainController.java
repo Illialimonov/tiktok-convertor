@@ -140,18 +140,18 @@ public class MainController {
 
     private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList) throws IOException, InterruptedException {
         String format = "bestaudio[ext=m4a]";
+
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -thread_queue_size 512 -threads 0 " +
-                        "-i pipe:0 " +
-                        "-ss %d -to %d " +             // start and end trim in seconds
-                        "-c:a aac -b:a 192k -vn " +    // audio codec and no video
-                        "-movflags frag_keyframe+empty_moov " +
-                        "%s_chopped.m4a",
+                        "-f \"%s\" -o temp_audio.m4a \"%s\" && " +
+                        "ffmpeg -threads 0 -ss %d -to %d " +
+                        "-i temp_audio.m4a " +
+                        "-c:a aac -b:a 192k -vn " +
+                        "-movflags +faststart " +
+                        "%s_chopped.m4a && rm temp_audio.m4a",
                 dlStart,
                 dlEnd,
                 format,
@@ -160,6 +160,8 @@ public class MainController {
                 ffmpegEnd,
                 hash
         );
+
+
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
