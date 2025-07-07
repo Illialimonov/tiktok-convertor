@@ -59,7 +59,7 @@ public class MainController {
         adjustForFiller(fillerTimingsList, fillerVideo);// safe fallback for `-t` in ffmpeg
 
         String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, duration, fillerTimingsList);
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList);
         String finalVideoLabel = subtitles ? "v" : "padded";
         fillerVideo = checkIfRandom(fillerVideo);
 
@@ -94,7 +94,8 @@ public class MainController {
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
                         subs + //"subs "
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[" + finalVideoLabel + "]\" -map \"[audio]\" -r %d -t %d -c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
+                        "-map \"[" + finalVideoLabel + "]\" -map \"[audio]\" -r %d -t %d " +
+                        "-c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
                         "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
                         "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 dlStart,
@@ -137,18 +138,32 @@ public class MainController {
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int duration, List<Integer> timingList) throws IOException, InterruptedException {
+    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList) throws IOException, InterruptedException {
+        String format = "bestaudio[ext=m4a]";
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "-f bestaudio[ext=m4a] -o \"%s.m4a\" \"%s\" && " + // 1. Download to temp file
-                        "ffmpeg -hide_banner -loglevel error -ss %d -t %d -i \"%s.m4a\" " + // 2. Clip segment
-                        "-c:a aac -b:a 128k -f ipod \"%s_chopped.m4a\" && "+
-                        "rm \"%s.m4a\"", // 4. Delete temp file
-                dlStart, dlEnd, hash, youtubeUrl, ffmpegStart, duration, hash, hash,hash
+                        "--hls-prefer-ffmpeg " +
+                        "--extractor-args \"youtube:po_token=web.main+web\" " +
+                        "-f \"%s\" -o - \"%s\" | " +
+                        "ffmpeg -thread_queue_size 512 -threads 0 " +
+                        "-i pipe:0 " +
+                        "-ss %d -to %d " +             // start and end trim in seconds
+                        "-c:a aac -b:a 192k -vn " +    // audio codec and no video
+                        "-movflags frag_keyframe+empty_moov " +
+                        "-f mp4 " +
+                        "%s_chopped.m4a",
+                dlStart,
+                dlEnd,
+                format,
+                youtubeUrl,
+                ffmpegStart,
+                ffmpegEnd,
+                hash
         );
+
 
 
 
