@@ -58,9 +58,7 @@ public class MainController {
         List<Integer> fillerTimingsList = new ArrayList<>(timingsList);
         adjustForFiller(fillerTimingsList, fillerVideo);// safe fallback for `-t` in ffmpeg
 
-        String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList);
-        String finalVideoLabel = subtitles ? "v" : "padded";
+
         fillerVideo = checkIfRandom(fillerVideo);
 
         int rate = getRateBasedOnRole(role);
@@ -74,6 +72,12 @@ public class MainController {
         } else {
             format = "bestvideo[height<=1080]+bestaudio";
         }
+
+        String subs = "";
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList, format);
+        String finalVideoLabel = subtitles ? "v" : "padded";
+
+
 
 
         System.out.println("MY RATE  IS " + rate);
@@ -131,27 +135,44 @@ public class MainController {
         try {
             Path path = Paths.get("subs.ass");
             Files.deleteIfExists(path);
-            System.out.println(hash+".m4a deleted successfully");
+            System.out.println(hash+".mp4 deleted successfully");
         } catch (Exception e) {
             e.printStackTrace();
         }
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList) throws IOException, InterruptedException {
-        String format = "bestaudio[ext=m4a]";
-
+    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList, String format) throws IOException, InterruptedException {
 
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
-                        "--proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "--extract-audio --audio-format m4a --audio-quality 0 " +
-                        "-o \"%s_chopped.m4a\" \"%s\"",
-                dlStart, dlEnd,
-                hash, youtubeUrl
+                        "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
+                        "--hls-prefer-ffmpeg " +
+                        "--extractor-args \"youtube:po_token=web.main+web\" " +
+                        "-f \"%s\" -o - \"%s\" | " +
+                        "ffmpeg -thread_queue_size 512 -threads 0 " +
+                        "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
+                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
+                        "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
+                        "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
+                        "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
+                        "-map \"[padded]\" -map \"[audio]\" " +
+                        "-c:v libx264 -crf 51 -preset ultrafast " +
+                        "-c:a aac -b:a 64k " +
+                        "-movflags +faststart -f mp4 \"%s_chopped.mp4\"",
+                dlStart,
+                dlEnd,
+                format,
+                youtubeUrl,
+                "subway",
+                ffmpegStart, ffmpegEnd,
+                timingList.get(0), timingList.get(1),
+                ffmpegStart, ffmpegEnd,
+                hash
         );
+
 
 
 
@@ -210,9 +231,9 @@ public class MainController {
         }
 
         try {
-            Path path = Paths.get(hash+".m4a");
+            Path path = Paths.get(hash+".mp4");
             Files.deleteIfExists(path);
-            System.out.println(hash+".m4a deleted successfully");
+            System.out.println(hash+".mp4 deleted successfully");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -227,7 +248,7 @@ public class MainController {
 
         System.out.println("start sending");
 
-        String filePath = hash+"_chopped.m4a"; // replace with your file path
+        String filePath = hash+"_chopped.mp4"; // replace with your file path
         String apiKey = "Bearer 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"; // replace with your key
 
         FileSystemResource audioFile = new FileSystemResource(new File(filePath));
