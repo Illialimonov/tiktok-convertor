@@ -146,14 +146,17 @@ public class MainController {
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
+                        "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
-                        "-f bestaudio[ext=m4a] " + // Specific format for best m4a audio
-                        "-o \"/%s_chopped.m4a\" \"%s\"", // Local output file path and YouTube URL
-                dlStart,                     // %d for --download-sections start
-                dlEnd,                       // %d for --download-sections end
-                hash,                        // %s for the output filename (e.g., /tmp/yourhash_audio.m4a)
-                youtubeUrl                   // %s for the YouTube URL
+                        "-x --audio-format m4a " +
+                        "-o \"%s_choppen.m4a\" " +
+                        "\"%s\"",
+                dlStart,
+                dlEnd,
+                hash,
+                youtubeUrl
         );
+
 
 
 
