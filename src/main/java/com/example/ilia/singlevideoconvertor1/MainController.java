@@ -59,7 +59,7 @@ public class MainController {
         adjustForFiller(fillerTimingsList, fillerVideo);// safe fallback for `-t` in ffmpeg
 
         String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd,duration, fillerTimingsList);
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList);
         String finalVideoLabel = subtitles ? "v" : "padded";
         fillerVideo = checkIfRandom(fillerVideo);
 
