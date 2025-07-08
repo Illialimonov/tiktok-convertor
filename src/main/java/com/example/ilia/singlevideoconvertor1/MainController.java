@@ -145,7 +145,6 @@ public class MainController {
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
                         "--download-sections \"*%d-%d\" " +
-                         "--force-keyframes-at-cuts " + // Optional, uncomment if needed and doesn't slow down too much
                         "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f bestaudio[ext=m4a] " + // Specific format for best m4a audio
