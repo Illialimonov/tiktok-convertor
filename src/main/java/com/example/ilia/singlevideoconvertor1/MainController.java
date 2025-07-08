@@ -149,7 +149,7 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-x --audio-format m4a " +
-                        "-o \"%s_choppen.m4a\" " +
+                        "-o \"%s_chopped.m4a\" " +
                         "\"%s\"",
                 dlStart,
                 dlEnd,
