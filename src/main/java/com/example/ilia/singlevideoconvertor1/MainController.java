@@ -151,8 +151,8 @@ public class MainController {
                         "-x --audio-format m4a " +
                         "-o \"%s_chopped.m4a\" " +
                         "\"%s\"",
-                dlStart,
-                dlEnd,
+                dlStart-10,
+                dlEnd-10,
                 hash,
                 youtubeUrl
         );
