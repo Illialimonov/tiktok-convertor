@@ -82,35 +82,23 @@ public class MainController {
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
                         "/home/ilialimits222/yt-dlp-venv/bin/yt-dlp " +
-                        "--download-sections \"*%d-%d\" " +
-                        "-4 --proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
-                        "--hls-prefer-ffmpeg " +
+                        "-f bestaudio " +
+                        "-x --audio-format m4a " +
+                        "--proxy \"http://user172039:sga9ij@216.74.96.94:4583\" " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
-                        "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -thread_queue_size 512 -threads 0 " +
-                        "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
-                        "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
-                        "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
-                        subs + //"subs "
-                        "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[" + finalVideoLabel + "]\" -map \"[audio]\" -r %d -t %d " +
-                        "-c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
-                        "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
-                        "gcloud storage cp - gs://tiktok1234/%s.mp4",
-                dlStart,
-                dlEnd,
-                format,
-                youtubeUrl,
-                fillerVideo,
-                ffmpegStart, ffmpegEnd,                          // [0:v] yt trim
-                fillerTimingsList.get(0), fillerTimingsList.get(1), // [1:v] filler trim
-                ffmpegStart, ffmpegEnd,                          // [0:a] audio trim
-                rate,
-                duration,
-                crf,
-                hash
+                        "-o \"%s_full.%%(ext)s\" " +  // yt-dlp will fill in ext as m4a
+                        "\"%s\" && " +
+                        "ffmpeg -y -i \"%s_full.m4a\" -ss %d -to %d -c:a aac -b:a 192k \"%s_chopped.m4a\" && " +
+                        "rm \"%s_full.m4a\"",
+                hash,         // for output name
+                youtubeUrl,   // video to download
+                hash,         // input to ffmpeg
+                dlStart,      // start time in seconds
+                dlEnd,        // end time in seconds
+                hash,         // output trimmed file
+                hash          // clean up temp full audio
         );
+
         //hi
 
         ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
