@@ -160,7 +160,7 @@ public class MainController {
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[a]\" " +
                         "-map \"[v]\" -map \"[a]\" " +
                         "-c:v libx264 -preset ultrafast -crf 35 " +
-                        "-c:a aac -b:a 96k -movflags +faststart -f mp4 \"/home/ilialimits222/output/%s_chopped.mp4\"'",
+                        "-c:a aac -b:a 96k -movflags +faststart -f mp4 \"/home/ilialimits222/output/%s_chopped.mp4\"",
                 dlStart, dlEnd,
                 format, youtubeUrl,
                 "minecraft",
