@@ -163,7 +163,7 @@ public class MainController {
                         "-map \"[v]\" -map \"[a]\" " +
                         "-c:v libx264 -preset ultrafast -crf 35 " +  // Lower quality = faster
                         "-c:a aac -b:a 96k " +
-                        "-movflags +faststart -f mp4 \"/home/ilialimits222/output/%s_chopped.mp4\"",
+                        "-movflags +faststart -f mp4 \"%s_chopped.mp4\"",
                 dlStart, dlEnd,
                 format, youtubeUrl,
                 "minecraft",
