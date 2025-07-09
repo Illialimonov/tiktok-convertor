@@ -152,7 +152,8 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -thread_queue_size 512 -threads 0 " +
+                        "ffmpeg -fflags +genpts -thread_queue_size 512 -threads 0 " +
+                        "-vsync vfr -fps_mode vfr -r 5 " + // 👈🏽 LOW FPS settings here
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
                         "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
@@ -172,6 +173,7 @@ public class MainController {
                 ffmpegStart, ffmpegEnd,
                 hash
         );
+
 
 
 
