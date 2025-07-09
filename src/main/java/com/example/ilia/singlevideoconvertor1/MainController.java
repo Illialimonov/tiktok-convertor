@@ -166,7 +166,7 @@ public class MainController {
                 dlEnd,
                 format,
                 youtubeUrl,
-                "subway",
+                "minecraft",
                 ffmpegStart, ffmpegEnd,
                 timingList.get(0), timingList.get(1),
                 ffmpegStart, ffmpegEnd,
