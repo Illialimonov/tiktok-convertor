@@ -160,8 +160,7 @@ public class MainController {
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
                         "-map \"[padded]\" -map \"[audio]\" -r %d -t %d " +
                         "-c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
-                        "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
-                        "gcloud storage cp - gs://tiktok1234/%s.mp4",
+                        "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 \\\"//%s_chopped.mp4\\\"",
                 dlStart,
                 dlEnd,
                 format,
