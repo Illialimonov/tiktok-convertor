@@ -162,7 +162,7 @@ public class MainController {
                         "-c:v libx264 -preset ultrafast -crf 35 " +
                         "-c:a aac -b:a 96k -movflags +faststart -f mp4 \"%s_chopped.mp4\"",
                 dlStart, dlEnd,
-                "worstvideo+bestaudio", youtubeUrl,
+                "269+bestaudio", youtubeUrl,
                 "minecraft",
                 ffmpegStart, ffmpegEnd,
                 timingList.get(0), timingList.get(1),
