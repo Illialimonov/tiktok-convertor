@@ -152,28 +152,27 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -thread_queue_size 512 -threads 0 " +
+                        "ffmpeg -y -threads 0 -thread_queue_size 512 " +
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
-                        "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
-                        "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
-                        "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[padded]\" -map \"[audio]\" -r %d -t %d " +
-                        "-c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
-                        "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 \"%s_chopped.mp4\"",
-                dlStart,
-                dlEnd,
-                format,
-                youtubeUrl,
+                        "-filter_complex \"" +
+                        "[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS[yt];" +
+                        "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS[filler];" +
+                        "[yt][filler]vstack=inputs=2[v];" +
+                        "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[a]" +
+                        "\" " +
+                        "-map \"[v]\" -map \"[a]\" " +
+                        "-c:v libx264 -preset ultrafast -crf 35 " +  // Lower quality = faster
+                        "-c:a aac -b:a 96k " +
+                        "-movflags +faststart -f mp4 \"/home/ilialimits222/output/%s_chopped.mp4\"",
+                dlStart, dlEnd,
+                format, youtubeUrl,
                 "minecraft",
-                ffmpegStart, ffmpegEnd,                          // [0:v] yt trim
-                timingList.get(0), timingList.get(1), // [1:v] filler trim
-                ffmpegStart, ffmpegEnd,                          // [0:a] audio trim
-                15,
-                duration,
-                51,
+                ffmpegStart, ffmpegEnd,                      // yt trim
+                timingList.get(0), timingList.get(1),        // filler trim
+                ffmpegStart, ffmpegEnd,                      // audio trim
                 hash
         );
+
 
 
 
