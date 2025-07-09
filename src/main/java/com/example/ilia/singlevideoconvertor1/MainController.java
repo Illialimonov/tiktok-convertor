@@ -74,7 +74,7 @@ public class MainController {
         }
 
         String subs = "";
-        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList, format);
+        if (subtitles) subs = subsLogicPre(youtubeUrl, hash, dlStart, dlEnd, ffmpegStart, ffmpegEnd, fillerTimingsList, format, duration);
         String finalVideoLabel = subtitles ? "v" : "padded";
 
 
@@ -142,7 +142,7 @@ public class MainController {
         return "https://storage.googleapis.com/tiktok1234/"+ hash +".mp4";
     }
 
-    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList, String format) throws IOException, InterruptedException {
+    private static String subsLogicPre(String youtubeUrl, String hash, int dlStart, int dlEnd, int ffmpegStart, int ffmpegEnd, List<Integer> timingList, String format, int duration) throws IOException, InterruptedException {
 
         String command = String.format(
                 "source /home/ilialimits222/yt-dlp-venv/bin/activate && " +
@@ -152,25 +152,27 @@ public class MainController {
                         "--hls-prefer-ffmpeg " +
                         "--extractor-args \"youtube:po_token=web.main+web\" " +
                         "-f \"%s\" -o - \"%s\" | " +
-                        "ffmpeg -fflags +genpts -thread_queue_size 512 -threads 0 " +
-                        "-vsync vfr -fps_mode vfr -r 5 " + // 👈🏽 LOW FPS settings here
+                        "ffmpeg -thread_queue_size 512 -threads 0 " +
                         "-i pipe:0 -i \"https://storage.googleapis.com/tiktok1234/%s.mp4\" " +
-                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; " +
+                        "-filter_complex \"[0:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1080:-1[yt]; "+
                         "[1:v]trim=start=%d:end=%d,setpts=PTS-STARTPTS,scale=1920:-1,crop=1080:960:420:60[filler]; " +
                         "[yt][filler]vstack=inputs=2[vstacked]; [vstacked]pad=1080:1920:0:176[padded]; " +
                         "[0:a]atrim=start=%d:end=%d,asetpts=PTS-STARTPTS[audio]\" " +
-                        "-map \"[padded]\" -map \"[audio]\" " +
-                        "-c:v libx264 -crf 51 -preset ultrafast " +
-                        "-c:a aac -b:a 64k " +
-                        "-movflags +faststart -f mp4 \"%s_chopped.mp4\"",
+                        "-map \"[padded]\" -map \"[audio]\" -r %d -t %d " +
+                        "-c:v libx264 -profile:v baseline -crf %d -preset ultrafast " +
+                        "-c:a aac -b:a 192k -movflags frag_keyframe+empty_moov -f mp4 - | " +
+                        "gcloud storage cp - gs://tiktok1234/%s.mp4",
                 dlStart,
                 dlEnd,
                 format,
                 youtubeUrl,
                 "minecraft",
-                ffmpegStart, ffmpegEnd,
-                timingList.get(0), timingList.get(1),
-                ffmpegStart, ffmpegEnd,
+                ffmpegStart, ffmpegEnd,                          // [0:v] yt trim
+                timingList.get(0), timingList.get(1), // [1:v] filler trim
+                ffmpegStart, ffmpegEnd,                          // [0:a] audio trim
+                15,
+                duration,
+                51,
                 hash
         );
 
