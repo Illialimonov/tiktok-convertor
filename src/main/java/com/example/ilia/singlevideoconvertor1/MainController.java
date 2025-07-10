@@ -365,7 +365,7 @@ public class MainController {
 
         return timingsMap;
     }
-    public static String generateSafeHash() {
+    public static String generateUniqueHash() {
         byte[] bytes = new byte[9];
         random.nextBytes(bytes);
         String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
