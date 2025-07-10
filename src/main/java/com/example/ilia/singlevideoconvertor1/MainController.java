@@ -365,15 +365,13 @@ public class MainController {
 
         return timingsMap;
     }
-    public static String generateUniqueHash() {
-        byte[] bytes = new byte[9]; // 9 bytes ≈ 12 Base64 characters
-        String hash;
-        do {
-            random.nextBytes(bytes);
-            hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
-        } while (hash.charAt(0) == '_');
-        return hash;
+    public static String generateSafeHash() {
+        byte[] bytes = new byte[9];
+        random.nextBytes(bytes);
+        String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
+        return "a" + hash; // guaranteed to start safely
     }
+
 
 
 }
