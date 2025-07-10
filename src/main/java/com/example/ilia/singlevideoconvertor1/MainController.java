@@ -135,7 +135,15 @@ public class MainController {
         try {
             Path path = Paths.get("subs.ass");
             Files.deleteIfExists(path);
-            System.out.println(hash+".mp4 deleted successfully");
+            System.out.println("subs.ass deleted successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Path path = Paths.get(hash+"_chopped.mp4");
+            Files.deleteIfExists(path);
+            System.out.println(hash+"_chopped.mp4 deleted successfully");
         } catch (Exception e) {
             e.printStackTrace();
         }
