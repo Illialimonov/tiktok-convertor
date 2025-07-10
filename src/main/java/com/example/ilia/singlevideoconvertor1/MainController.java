@@ -359,8 +359,13 @@ public class MainController {
     }
     public static String generateUniqueHash() {
         byte[] bytes = new byte[9]; // 9 bytes ≈ 12 Base64 characters
-        random.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
+        String hash;
+        do {
+            random.nextBytes(bytes);
+            hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes).substring(0, 12);
+        } while (hash.charAt(0) == '_');
+        return hash;
     }
+
 
 }
